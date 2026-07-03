@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from external_api import fetch_openfoodfacts_data
 
 app = Flask(__name__)
 
@@ -27,7 +28,7 @@ def get_item(item_id):
         return jsonify({"error": "Item not found"}), 404
     return jsonify(item), 200
 
-# 3. POST /inventory -> Add a new item 
+# 3. POST /inventory -> Add a new item manually
 @app.route('/inventory', methods=['POST'])
 def add_item():
     data = request.get_json()
@@ -51,7 +52,7 @@ def add_item():
     inventory.append(new_item)
     return jsonify(new_item), 201
 
-# 4. PATCH /inventory/<id> -> Update an item 
+# 4. PATCH /inventory/<id> -> Update an item's details 
 @app.route('/inventory/<int:item_id>', methods=['PATCH'])
 def update_item(item_id):
     item = next((i for i in inventory if i["id"] == item_id), None)
@@ -62,7 +63,7 @@ def update_item(item_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
         
-    # Dynamically update provided fields
+    # Dynamically update only provided fields
     if "product_name" in data:
         item["product_name"] = data["product_name"]
     if "brands" in data:
@@ -87,6 +88,33 @@ def delete_item(item_id):
     inventory = [i for i in inventory if i["id"] != item_id]
     return jsonify({"message": f"Item {item_id} successfully deleted"}), 200
 
+# 6. POST /inventory/fetch/<barcode> -> Fetch from external API and store it 
+@app.route('/inventory/fetch/<barcode>', methods=['POST'])
+def fetch_and_add_item(barcode):
+    # Query the external API helper function
+    external_data = fetch_openfoodfacts_data(barcode)
+    
+    if not external_data:
+        return jsonify({"error": "Product not found on OpenFoodFacts or external API failure"}), 404
+        
+    data = request.get_json() or {}
+    
+    # Generate a unique ID
+    new_id = max([item["id"] for item in inventory], default=0) + 1
+    
+    # Combine external product specifications with the local price/stock entries
+    new_item = {
+        "id": new_id,
+        "product_name": external_data["product_name"],
+        "brands": external_data["brands"],
+        "ingredients_text": external_data["ingredients_text"],
+        "price": data.get("price", 0.0),
+        "stock": data.get("stock", 0)
+    }
+    
+    inventory.append(new_item)
+    return jsonify(new_item), 201
+
 if __name__ == '__main__':
-    # Running in debug mode for API validation as required in 1000257972.jpg
+    # Running in debug mode for active code validation and testing 
     app.run(debug=True, port=5000)
