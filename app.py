@@ -28,3 +28,26 @@ def get_item(item_id):
     return jsonify(item), 200
 
 # 3. POST /inventory -> Add a new item (1000257969.jpg)
+@app.route('/inventory', methods=['POST'])
+def add_item():
+    data = request.get_json()
+    
+    # Simple validation
+    if not data or "product_name" not in data:
+        return jsonify({"error": "Invalid data. 'product_name' is required."}), 400
+        
+    # Generate a unique ID (1000257966.jpg requires each item to have an ID)
+    new_id = max([item["id"] for item in inventory], default=0) + 1
+    
+    new_item = {
+        "id": new_id,
+        "product_name": data.get("product_name"),
+        "brands": data.get("brands", "Unknown"),
+        "ingredients_text": data.get("ingredients_text", ""),
+        "price": data.get("price", 0.0),
+        "stock": data.get("stock", 0)
+    }
+    
+    inventory.append(new_item)
+    return jsonify(new_item), 201
+
