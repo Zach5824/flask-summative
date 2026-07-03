@@ -51,3 +51,42 @@ def add_item():
     inventory.append(new_item)
     return jsonify(new_item), 201
 
+# 4. PATCH /inventory/<id> -> Update an item (1000257969.jpg)
+@app.route('/inventory/<int:item_id>', methods=['PATCH'])
+def update_item(item_id):
+    item = next((i for i in inventory if i["id"] == item_id), None)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+        
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    # Dynamically update provided fields
+    if "product_name" in data:
+        item["product_name"] = data["product_name"]
+    if "brands" in data:
+        item["brands"] = data["brands"]
+    if "ingredients_text" in data:
+        item["ingredients_text"] = data["ingredients_text"]
+    if "price" in data:
+        item["price"] = data["price"]
+    if "stock" in data:
+        item["stock"] = data["stock"]
+        
+    return jsonify(item), 200
+
+# 5. DELETE /inventory/<id> -> Remove an item (1000257969.jpg)
+@app.route('/inventory/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    global inventory
+    item = next((i for i in inventory if i["id"] == item_id), None)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+        
+    inventory = [i for i in inventory if i["id"] != item_id]
+    return jsonify({"message": f"Item {item_id} successfully deleted"}), 200
+
+if __name__ == '__main__':
+    # Running in debug mode for API validation as required in 1000257972.jpg
+    app.run(debug=True, port=5000)
