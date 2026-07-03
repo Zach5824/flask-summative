@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Simulated in-memory database array (as outlined in 1000257966.jpg)
+# Simulated in-memory database array 
 inventory = [
     {
         "id": 1,
@@ -14,12 +14,12 @@ inventory = [
     }
 ]
 
-# 1. GET /inventory -> Fetch all items (1000257969.jpg)
+# 1. GET /inventory -> Fetch all items 
 @app.route('/inventory', methods=['GET'])
 def get_inventory():
     return jsonify(inventory), 200
 
-# 2. GET /inventory/<id> -> Fetch a single item (1000257969.jpg)
+# 2. GET /inventory/<id> -> Fetch a single item 
 @app.route('/inventory/<int:item_id>', methods=['GET'])
 def get_item(item_id):
     item = next((i for i in inventory if i["id"] == item_id), None)
@@ -27,7 +27,7 @@ def get_item(item_id):
         return jsonify({"error": "Item not found"}), 404
     return jsonify(item), 200
 
-# 3. POST /inventory -> Add a new item (1000257969.jpg)
+# 3. POST /inventory -> Add a new item 
 @app.route('/inventory', methods=['POST'])
 def add_item():
     data = request.get_json()
@@ -36,7 +36,7 @@ def add_item():
     if not data or "product_name" not in data:
         return jsonify({"error": "Invalid data. 'product_name' is required."}), 400
         
-    # Generate a unique ID (1000257966.jpg requires each item to have an ID)
+    # Generate a unique ID 
     new_id = max([item["id"] for item in inventory], default=0) + 1
     
     new_item = {
@@ -51,7 +51,7 @@ def add_item():
     inventory.append(new_item)
     return jsonify(new_item), 201
 
-# 4. PATCH /inventory/<id> -> Update an item (1000257969.jpg)
+# 4. PATCH /inventory/<id> -> Update an item 
 @app.route('/inventory/<int:item_id>', methods=['PATCH'])
 def update_item(item_id):
     item = next((i for i in inventory if i["id"] == item_id), None)
@@ -76,7 +76,7 @@ def update_item(item_id):
         
     return jsonify(item), 200
 
-# 5. DELETE /inventory/<id> -> Remove an item (1000257969.jpg)
+# 5. DELETE /inventory/<id> -> Remove an item 
 @app.route('/inventory/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     global inventory
